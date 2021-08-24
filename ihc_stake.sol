@@ -1,5 +1,5 @@
 pragma solidity ^0.5.16;
-import {IHC_TEST} from 'ihc_test_token.sol';
+import {IHC} from 'ihc_token.sol';
 
 library SafeMath {
     /**
@@ -152,10 +152,10 @@ contract IHC_STAKE {
     uint256 stakeMinAmount;
     
     constructor () public payable{
-        ihcTokenAddress = 0x6ae3906bfe928af047786c78d3fc9783976aca9a;
+        ihcTokenAddress = 0xf7AfD1438CB234A58f8740Be20EB2094019D71d8;
         state = LoanState.Created;
-        apy = IHC_TEST(ihcTokenAddress).getApy();
-        stakePoolAddress = IHC_TEST(ihcTokenAddress).getStakePoolAddress();
+        apy = IHC(ihcTokenAddress).getApy();
+        stakePoolAddress = IHC(ihcTokenAddress).getYieldFarmPoolAddress();
     }
     
     modifier onlyInState(LoanState expectedState) {
@@ -175,7 +175,7 @@ contract IHC_STAKE {
     
     function getBalanceOfPool() public view returns(uint256) {
         
-        return IHC_TEST(ihcTokenAddress).balanceOf(stakePoolAddress);
+        return IHC(ihcTokenAddress).balanceOf(stakePoolAddress);
     }
     
     function getStakeAmount() public view returns(uint256) {
@@ -197,13 +197,13 @@ contract IHC_STAKE {
     }
     
     function stake(uint256 _stakeAmount, uint _daysAfter) public onlyInState(LoanState.Created) {
-        require(_stakeAmount >= IHC_TEST(ihcTokenAddress).getStakeMinAmount(), "Minimum stake amount not met");
+        require(_stakeAmount >= IHC(ihcTokenAddress).getYieldFarmMinAmount(), "Minimum stake amount not met");
         state = LoanState.Funded;
-        withdrawDeadlineByTimestamp = block.timestamp + _daysAfter * 1 days;
+        withdrawDeadlineByTimestamp = block.timestamp + (_daysAfter * 1 days);
         staker = msg.sender;
         stakeDays = _daysAfter;
         stakeAmount = _stakeAmount;
-        IHC_TEST(ihcTokenAddress).transferFrom(msg.sender, stakePoolAddress, stakeAmount);
+        IHC(ihcTokenAddress).transferFrom(msg.sender, stakePoolAddress, stakeAmount);
     }
     
     function withdraw() public onlyInState(LoanState.Funded) {
@@ -211,7 +211,7 @@ contract IHC_STAKE {
         require(block.timestamp >= withdrawDeadlineByTimestamp, "It's not time to end");
         
         uint256 yeildAmount = ((stakeAmount * apy) / 100) / 365 * stakeDays;
-        IHC_TEST(ihcTokenAddress).transferFrom(stakePoolAddress, staker, stakeAmount.add(yeildAmount));
+        IHC(ihcTokenAddress).transferFrom(stakePoolAddress, staker, stakeAmount.add(yeildAmount));
         selfdestruct(staker);
     }
 }

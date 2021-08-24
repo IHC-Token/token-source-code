@@ -1,6 +1,6 @@
 pragma experimental ABIEncoderV2;
 pragma solidity ^0.5.16;
-import {IHC_TEST} from 'ihc_test_token.sol';
+import {IHC} from 'ihc_token.sol';
 
 library SafeMath {
     /**
@@ -175,12 +175,12 @@ contract IHC_TEST_LOAN {
         }else {
             revert();
         }
-        ihcTokenAddress = 0x6ae3906bfe928af047786c78d3fc9783976aca9a;
-        lender = IHC_TEST(ihcTokenAddress).getLoanPoolAddress();
+        ihcTokenAddress = 0xf7AfD1438CB234A58f8740Be20EB2094019D71d8;
+        lender = IHC(ihcTokenAddress).getLoanPoolAddress();
         state = LoanState.Created;
         
-        feePercent = IHC_TEST(ihcTokenAddress).getLoanFeePercent();
-        loanAmount = terms.collateralAmount * IHC_TEST(ihcTokenAddress).getLoanSizePercent() / 100;
+        feePercent = IHC(ihcTokenAddress).getLoanFeePercent();
+        loanAmount = terms.collateralAmount * IHC(ihcTokenAddress).getLoanSizePercent() / 100;
     }
     
     modifier onlyInState(LoanState expectedState) {
@@ -205,7 +205,7 @@ contract IHC_TEST_LOAN {
     
     function getBalanceOfPool() public view returns(uint256) {
         
-        return IHC_TEST(ihcTokenAddress).balanceOf(lender);
+        return IHC(ihcTokenAddress).balanceOf(lender);
     }
     
     function getLoanAmount() public view returns(uint256) {
@@ -214,33 +214,33 @@ contract IHC_TEST_LOAN {
     }
     
     function checkTokenAllowance(address owner) public view returns (uint256) {
-        return IHC_TEST(ihcTokenAddress).allowance(owner, address(this));
+        return IHC(ihcTokenAddress).allowance(owner, address(this));
     }
     
     function takeALoanAndAcceptLoanTerms(uint256 _collateralAmount) public payable onlyInState(LoanState.Created) {
         require(_collateralAmount == terms.collateralAmount, "Invalid collateral amount");
-        require(_collateralAmount >= IHC_TEST(ihcTokenAddress).getLoanMinAmount(), "Minimum loan amount not met");
+        require(_collateralAmount >= IHC(ihcTokenAddress).getLoanMinAmount(), "Minimum loan amount not met");
         borrower = msg.sender;
         state = LoanState.Taken;
         
         // grant allowance on token smart contract
-        IHC_TEST(ihcTokenAddress).transferFrom(borrower, address(this), _collateralAmount);
+        IHC(ihcTokenAddress).transferFrom(borrower, address(this), _collateralAmount);
         
         // grant allowance on token smart contract
-        IHC_TEST(ihcTokenAddress).transferFrom(lender, borrower, loanAmount);
+        IHC(ihcTokenAddress).transferFrom(lender, borrower, loanAmount);
     }
     
     function repay() public onlyInState(LoanState.Taken) {
         require(msg.sender == borrower, "Only the borrower can repay the loan");
         uint feeAmount = ((loanAmount * feePercent) / 100 / 365) * loanDuration;
-        IHC_TEST(ihcTokenAddress).transferFrom(borrower, lender, loanAmount.add(feeAmount));
+        IHC(ihcTokenAddress).transferFrom(borrower, lender, loanAmount.add(feeAmount));
         selfdestruct(borrower);
     }
     
     function liquidate() public onlyInState(LoanState.Taken) {
         require(msg.sender == lender, "Only the lender can liquidate the loan");
         require(block.timestamp >= repayByTimestamp, "Can not liquidate before the loan is due");
-        IHC_TEST(ihcTokenAddress).transfer(lender, terms.collateralAmount);
+        IHC(ihcTokenAddress).transfer(lender, terms.collateralAmount);
         selfdestruct(lender);
     }
 }

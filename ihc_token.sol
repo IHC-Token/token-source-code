@@ -355,16 +355,16 @@ contract IHC is Context, IBEP20, Ownable {
     bool private burnFlag;
     uint256 private transactionFeePercent;
     address public transactionPoolAddress;
-    address payable public stakePoolAddress;
+    address payable public yieldFarmPoolAddress;
     address payable public loanPoolAddress;
     uint private apy;
     uint private loanFeePercent;
     uint private loanSizePercent;
-    uint private stakeMinAmount;
+    uint private yieldFarmMinAmount;
     uint private loanMinAmount;
     
     constructor() public {
-        _name = "ihc";
+        _name = "Inflation Hedging Coin";
         _symbol = "IHC";
         _decimals = 18;
         _totalSupply = 1000000000000 * 10 ** 18;
@@ -376,7 +376,7 @@ contract IHC is Context, IBEP20, Ownable {
         apy = 8;
         loanFeePercent = 10;
         loanSizePercent = 70;
-        stakeMinAmount= 100000;
+        yieldFarmMinAmount= 100000;
         loanMinAmount= 100000;
         
         emit Transfer(address(0), msg.sender, _totalSupply);
@@ -424,31 +424,50 @@ contract IHC is Context, IBEP20, Ownable {
         return _balances[account];
     }
     
+    /**
+    * @dev See apy
+    */
     function getApy() public view returns (uint) {
         return apy;
     }
     
+    /**
+    * @dev See loan fee percent
+    */
     function getLoanFeePercent() public view returns (uint) {
         return loanFeePercent;
     }
     
+    /**
+    * @dev See loan size percent
+    */
     function getLoanSizePercent() public view returns (uint) {
         return loanSizePercent;
     }
     
+    /**
+    * @dev See transaction pool address
+    */
     function getTransactionPoolAddress() public view returns (address) {
         return transactionPoolAddress;
     }
     
-    function getStakePoolAddress() public view returns (address payable) {
-        return stakePoolAddress;
+    /**
+    * @dev See yield farm pool address.
+    */
+    function getYieldFarmPoolAddress() public view returns (address payable) {
+        return yieldFarmPoolAddress;
     }
     
+    /**
+    * @dev See loan pool address.
+    */
     function getLoanPoolAddress() public view returns (address payable) {
         return loanPoolAddress;
     }
+    
     /**
-    * @dev See end of time.
+    * @dev see end of time.
     */
     function getEndOfTime() public view returns (uint256) {
         return end;
@@ -483,10 +502,10 @@ contract IHC is Context, IBEP20, Ownable {
     }
     
     /**
-    * @dev See stake min amount.
+    * @dev See yield farm min amount.
     */
-    function getStakeMinAmount() public view returns (uint256) {
-        return stakeMinAmount;
+    function getYieldFarmMinAmount() public view returns (uint256) {
+        return yieldFarmMinAmount;
     }
     
     /**
@@ -609,34 +628,52 @@ contract IHC is Context, IBEP20, Ownable {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "BEP20: decreased allowance below zero"));
         return true;
     }
-  
+    
+    /**
+    * @dev set end time.
+    */
     function setEndTime(uint256 timeInSec) public onlyOwner returns (uint256) {
         end = block.timestamp.add(timeInSec);
         burnFlag = true;
         
         return end;
     }
-
+    
+    /**
+    * @dev set transaction fee percent.
+    */
     function setTransactionFeePercent(uint256 newTransactionFeePercent) public onlyOwner returns (uint){
         transactionFeePercent = newTransactionFeePercent;
         return transactionFeePercent;
     }
-
+    
+    /**
+    * @dev set apy.
+    */
     function setApy(uint256 newApy) public onlyOwner returns (uint){
         apy = newApy;
         return apy;
     }
-
+    
+    /**
+    * @dev set loan fee percent.
+    */
     function setLoanFeePercent(uint256 newLoanFeePercent) public onlyOwner returns (uint){
         loanFeePercent = newLoanFeePercent;
         return loanFeePercent;
     }
-
+    
+    /**
+    * @dev set loan size percent.
+    */
     function setLoanSizePercent(uint256 newLoanSizePercent) public onlyOwner returns (uint){
         loanSizePercent = newLoanSizePercent;
         return loanSizePercent;
     }
     
+    /**
+    * @dev set set burn amount.
+    */
     function setBurnAmount(uint256 newBurnAmount) public onlyOwner returns (uint256) {
         burnAmount = newBurnAmount;
         return burnAmount;
@@ -650,6 +687,10 @@ contract IHC is Context, IBEP20, Ownable {
         return newTransactionPoolAddress;
     }
     
+  
+    /**
+    * @dev set address to exclude from transaction fee.
+    */
     function setExcludedAddressOfTransactionFee(address newExcludedAddressTransactionFee)  public onlyOwner returns (bool) {
         if (_isExcludedTransactionFee[newExcludedAddressTransactionFee] == false) {
             _isExcludedTransactionFee[newExcludedAddressTransactionFee] = true;
@@ -657,13 +698,30 @@ contract IHC is Context, IBEP20, Ownable {
         }
         return true;
     }
+    
+    /**
+    * @dev delete address from transaction fee exclude list.
+    */
+    function popExcludedAddressOfTransactionFee(address oldExcludedAddressTransactionFee)  public onlyOwner returns (bool) {
+        if (_isExcludedTransactionFee[oldExcludedAddressTransactionFee] == true) {
+            _isExcludedTransactionFee[oldExcludedAddressTransactionFee] = false;
+            
+            for (uint i = 0; i<_excludedTransactionFee.length; i++){
+                if(_excludedTransactionFee[i] == oldExcludedAddressTransactionFee) {
+                    delete _excludedTransactionFee[i];
+                }
+            }
+            
+        }
+        return true;
+    }
   
     /**
-    * @dev set stakePoolAddress.
+    * @dev set yield farm pool address.
     */
-    function setStakePoolAddress(address payable newStakePoolAddress) public onlyOwner returns (address) {
-        stakePoolAddress = newStakePoolAddress;
-        return stakePoolAddress;
+    function setYieldFarmPoolAddress(address payable newYieldFarmPoolAddress) public onlyOwner returns (address) {
+        yieldFarmPoolAddress = newYieldFarmPoolAddress;
+        return yieldFarmPoolAddress;
     }
   
     /**
@@ -674,16 +732,25 @@ contract IHC is Context, IBEP20, Ownable {
         return loanPoolAddress;
     }
     
-    function setStakeMinAmount(uint256 newStakeMinAmount) public onlyOwner returns (uint256) {
-        stakeMinAmount = newStakeMinAmount;
-        return stakeMinAmount;
+    /**
+    * @dev set yield farm min amount.
+    */
+    function setYieldFarmMinAmount(uint256 newYieldFarmMinAmount) public onlyOwner returns (uint256) {
+        yieldFarmMinAmount = newYieldFarmMinAmount;
+        return yieldFarmMinAmount;
     }
     
+    /**
+    * @dev set loanMinAmount.
+    */
     function setLoanMinAmount(uint256 newLoanMinAmount) public onlyOwner returns (uint256) {
         loanMinAmount = newLoanMinAmount;
         return loanMinAmount;
     }
-  
+    
+    /**
+    * @dev set burn.
+    */
     function burn() public onlyOwner returns (bool) {
         _burn(_msgSender(), burnAmount);
         burnFlag = false;

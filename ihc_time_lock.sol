@@ -16,13 +16,11 @@ contract IHC_TIME_LOCK {
         IHC(ihcTokenAddress).transferFrom(msg.sender, address(this), amount);
     }
     
-    function withdraw(address token, uint amount) external {
+    function withdraw(address token, uint amount) external returns(bool) {
         require(msg.sender == owner, 'only owner');
         require(block.timestamp >= end, 'too early');
-        if(token == address(0)) { 
-            owner.transfer(amount);
-        } else {
-            IHC(ihcTokenAddress).transfer(owner, amount);
-        }
+        IHC(ihcTokenAddress).transfer(owner, amount);
+        
+        return true;
     }
 }

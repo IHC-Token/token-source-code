@@ -372,7 +372,7 @@ contract IHC is Context, IBEP20, Ownable {
         
         end = block.timestamp;
         burnFlag = false;
-        transactionFeePercent = 5;
+        transactionFeePercent = 0;
         apy = 8;
         loanFeePercent = 10;
         loanSizePercent = 70;
@@ -385,133 +385,133 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev Returns the bep token owner.
     */
-    function getOwner() public view returns (address) {
+    function getOwner() external view returns (address) {
         return owner();
     }
     
     /**
     * @dev Returns the token decimals.
     */
-    function decimals() public view returns (uint8) {
+    function decimals() external view returns (uint8) {
         return _decimals;
     }
     
     /**
     * @dev Returns the token symbol.
     */
-    function symbol() public view returns (string memory) {
+    function symbol() external view returns (string memory) {
         return _symbol;
     }
     
     /**
     * @dev Returns the token name.
     */
-    function name() public view returns (string memory) {
+    function name() external view returns (string memory) {
         return _name;
     }
     
     /**
     * @dev See {BEP20-totalSupply}.
     */
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() external view returns (uint256) {
         return _totalSupply;
     }
     
     /**
     * @dev See {BEP20-balanceOf}.
     */
-    function balanceOf(address account) public view returns (uint256) {
+    function balanceOf(address account) external view returns (uint256) {
         return _balances[account];
     }
     
     /**
     * @dev See apy
     */
-    function getApy() public view returns (uint) {
+    function getApy() external view returns (uint) {
         return apy;
     }
     
     /**
     * @dev See loan fee percent
     */
-    function getLoanFeePercent() public view returns (uint) {
+    function getLoanFeePercent() external view returns (uint) {
         return loanFeePercent;
     }
     
     /**
     * @dev See loan size percent
     */
-    function getLoanSizePercent() public view returns (uint) {
+    function getLoanSizePercent() external view returns (uint) {
         return loanSizePercent;
     }
     
     /**
     * @dev See transaction pool address
     */
-    function getTransactionPoolAddress() public view returns (address) {
+    function getTransactionPoolAddress() external view returns (address) {
         return transactionPoolAddress;
     }
     
     /**
     * @dev See yield farm pool address.
     */
-    function getYieldFarmPoolAddress() public view returns (address payable) {
+    function getYieldFarmPoolAddress() external view returns (address payable) {
         return yieldFarmPoolAddress;
     }
     
     /**
     * @dev See loan pool address.
     */
-    function getLoanPoolAddress() public view returns (address payable) {
+    function getLoanPoolAddress() external view returns (address payable) {
         return loanPoolAddress;
     }
     
     /**
     * @dev see end of time.
     */
-    function getEndOfTime() public view returns (uint256) {
+    function getEndOfTime() external view returns (uint256) {
         return end;
     }
     
     /**
     * @dev See transactionFeePercent.
     */
-    function getTransactionFeePercent() public view returns (uint) {
+    function getTransactionFeePercent() external view returns (uint) {
         return transactionFeePercent;
     }
     
     /**
     * @dev See burn amount.
     */
-    function getBurnAmount() public view returns (uint256) {
+    function getBurnAmount() external view returns (uint256) {
         return burnAmount;
     }
     
     /**
     * @dev See burnFlag.
     */
-    function getBurnFlag() public view returns (bool) {
+    function getBurnFlag() external view returns (bool) {
         return burnFlag;
     }
     
     /**
     * @dev See isExcludedTransactionFee.
     */
-    function isExcludedTransactionFee(address _checkAddress) public view returns (bool) {
+    function isExcludedTransactionFee(address _checkAddress) external view returns (bool) {
         return _isExcludedTransactionFee[_checkAddress];
     }
     
     /**
     * @dev See yield farm min amount.
     */
-    function getYieldFarmMinAmount() public view returns (uint256) {
+    function getYieldFarmMinAmount() external view returns (uint256) {
         return yieldFarmMinAmount;
     }
     
     /**
     * @dev See loan min amount.
     */
-    function getLoanMinAmount() public view returns (uint256) {
+    function getLoanMinAmount() external view returns (uint256) {
         return loanMinAmount;
     }
     
@@ -523,7 +523,7 @@ contract IHC is Context, IBEP20, Ownable {
     * - `recipient` cannot be the zero address.
     * - the caller must have a balance of at least `amount`.
     */
-    function transfer(address recipient, uint256 amount) public returns (bool) {
+    function transfer(address recipient, uint256 amount) external returns (bool) {
         require(recipient != address(0), "BEP20: transfer to the zero address");
         require(transactionPoolAddress != address(0), "BEP20: transfer to the zero address");
     
@@ -546,7 +546,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev See {BEP20-allowance}.
     */
-    function allowance(address owner, address spender) public view returns (uint256) {
+    function allowance(address owner, address spender) external view returns (uint256) {
         return _allowances[owner][spender];
     }
     
@@ -557,7 +557,7 @@ contract IHC is Context, IBEP20, Ownable {
     *
     * - `spender` cannot be the zero address.
     */
-    function approve(address spender, uint256 amount) public returns (bool) {
+    function approve(address spender, uint256 amount) external returns (bool) {
         require(spender != address(0), "BEP20: spender cannot be the zero address");
         _approve(_msgSender(), spender, amount);
         return true;
@@ -575,7 +575,7 @@ contract IHC is Context, IBEP20, Ownable {
     * - the caller must have allowance for `sender`'s tokens of at least
     * `amount`.
     */
-    function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
         uint256 sendAmount = 0;
         if (_isExcludedTransactionFee[recipient] == true) {
             sendAmount = amount;
@@ -605,7 +605,7 @@ contract IHC is Context, IBEP20, Ownable {
     *
     * - `spender` cannot be the zero address.
     */
-    function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
+    function increaseAllowance(address spender, uint256 addedValue) external returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].add(addedValue));
         return true;
     }
@@ -624,7 +624,7 @@ contract IHC is Context, IBEP20, Ownable {
     * - `spender` must have allowance for the caller of at least
     * `subtractedValue`.
     */
-    function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
+    function decreaseAllowance(address spender, uint256 subtractedValue) external returns (bool) {
         _approve(_msgSender(), spender, _allowances[_msgSender()][spender].sub(subtractedValue, "BEP20: decreased allowance below zero"));
         return true;
     }
@@ -632,7 +632,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set end time.
     */
-    function setEndTime(uint256 timeInSec) public onlyOwner returns (uint256) {
+    function setEndTime(uint256 timeInSec) external onlyOwner returns (uint256) {
         end = block.timestamp.add(timeInSec);
         burnFlag = true;
         
@@ -642,7 +642,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set transaction fee percent.
     */
-    function setTransactionFeePercent(uint256 newTransactionFeePercent) public onlyOwner returns (uint){
+    function setTransactionFeePercent(uint256 newTransactionFeePercent) external onlyOwner returns (uint){
         transactionFeePercent = newTransactionFeePercent;
         return transactionFeePercent;
     }
@@ -650,7 +650,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set apy.
     */
-    function setApy(uint256 newApy) public onlyOwner returns (uint){
+    function setApy(uint256 newApy) external onlyOwner returns (uint){
         apy = newApy;
         return apy;
     }
@@ -658,7 +658,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set loan fee percent.
     */
-    function setLoanFeePercent(uint256 newLoanFeePercent) public onlyOwner returns (uint){
+    function setLoanFeePercent(uint256 newLoanFeePercent) external onlyOwner returns (uint){
         loanFeePercent = newLoanFeePercent;
         return loanFeePercent;
     }
@@ -666,7 +666,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set loan size percent.
     */
-    function setLoanSizePercent(uint256 newLoanSizePercent) public onlyOwner returns (uint){
+    function setLoanSizePercent(uint256 newLoanSizePercent) external onlyOwner returns (uint){
         loanSizePercent = newLoanSizePercent;
         return loanSizePercent;
     }
@@ -674,7 +674,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set set burn amount.
     */
-    function setBurnAmount(uint256 newBurnAmount) public onlyOwner returns (uint256) {
+    function setBurnAmount(uint256 newBurnAmount) external onlyOwner returns (uint256) {
         burnAmount = newBurnAmount;
         return burnAmount;
     }
@@ -682,7 +682,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set transactionPoolAddress.
     */
-    function setTransactionPoolAddress(address newTransactionPoolAddress) public onlyOwner returns (address) {
+    function setTransactionPoolAddress(address newTransactionPoolAddress) external onlyOwner returns (address) {
         transactionPoolAddress = newTransactionPoolAddress;
         return newTransactionPoolAddress;
     }
@@ -691,7 +691,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set address to exclude from transaction fee.
     */
-    function setExcludedAddressOfTransactionFee(address newExcludedAddressTransactionFee)  public onlyOwner returns (bool) {
+    function setExcludedAddressOfTransactionFee(address newExcludedAddressTransactionFee) external onlyOwner returns (bool) {
         if (_isExcludedTransactionFee[newExcludedAddressTransactionFee] == false) {
             _isExcludedTransactionFee[newExcludedAddressTransactionFee] = true;
             _excludedTransactionFee.push(newExcludedAddressTransactionFee);
@@ -702,7 +702,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev delete address from transaction fee exclude list.
     */
-    function popExcludedAddressOfTransactionFee(address oldExcludedAddressTransactionFee)  public onlyOwner returns (bool) {
+    function popExcludedAddressOfTransactionFee(address oldExcludedAddressTransactionFee) external onlyOwner returns (bool) {
         if (_isExcludedTransactionFee[oldExcludedAddressTransactionFee] == true) {
             _isExcludedTransactionFee[oldExcludedAddressTransactionFee] = false;
             
@@ -719,7 +719,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set yield farm pool address.
     */
-    function setYieldFarmPoolAddress(address payable newYieldFarmPoolAddress) public onlyOwner returns (address) {
+    function setYieldFarmPoolAddress(address payable newYieldFarmPoolAddress) external onlyOwner returns (address) {
         yieldFarmPoolAddress = newYieldFarmPoolAddress;
         return yieldFarmPoolAddress;
     }
@@ -727,7 +727,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set loanPoolAddress.
     */
-    function setLoanPoolAddress(address payable newLoanPoolAddress) public onlyOwner returns (address) {
+    function setLoanPoolAddress(address payable newLoanPoolAddress) external onlyOwner returns (address) {
         loanPoolAddress = newLoanPoolAddress;
         return loanPoolAddress;
     }
@@ -735,7 +735,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set yield farm min amount.
     */
-    function setYieldFarmMinAmount(uint256 newYieldFarmMinAmount) public onlyOwner returns (uint256) {
+    function setYieldFarmMinAmount(uint256 newYieldFarmMinAmount) external onlyOwner returns (uint256) {
         yieldFarmMinAmount = newYieldFarmMinAmount;
         return yieldFarmMinAmount;
     }
@@ -743,7 +743,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set loanMinAmount.
     */
-    function setLoanMinAmount(uint256 newLoanMinAmount) public onlyOwner returns (uint256) {
+    function setLoanMinAmount(uint256 newLoanMinAmount) external onlyOwner returns (uint256) {
         loanMinAmount = newLoanMinAmount;
         return loanMinAmount;
     }
@@ -751,7 +751,7 @@ contract IHC is Context, IBEP20, Ownable {
     /**
     * @dev set burn.
     */
-    function burn() public onlyOwner returns (bool) {
+    function burn() external onlyOwner returns (bool) {
         _burn(_msgSender(), burnAmount);
         burnFlag = false;
         return true;

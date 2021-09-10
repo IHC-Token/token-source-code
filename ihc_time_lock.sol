@@ -9,18 +9,28 @@ contract IHC_TIME_LOCK {
     constructor(address payable _owner, uint _daysAfter) public payable {
         end = block.timestamp + (_daysAfter * 1 days);
         owner = _owner;
-        ihcTokenAddress = 0xf7AfD1438CB234A58f8740Be20EB2094019D71d8;
+        ihcTokenAddress = 0x86a53fcd199212FEa44FA7e16EB1f28812be911D;
     }
 
-    function deposit(address token, uint amount) external {
+    function deposit(uint amount) external {
         IHC(ihcTokenAddress).transferFrom(msg.sender, address(this), amount);
     }
     
-    function withdraw(address token, uint amount) external returns(bool) {
+    function withdraw(uint amount) external returns(bool) {
         require(msg.sender == owner, 'only owner');
         require(block.timestamp >= end, 'too early');
         IHC(ihcTokenAddress).transfer(owner, amount);
         
         return true;
     }
+    
+    function getEndOfTime() external view returns (uint256) {
+        return end;
+    }
+    
+    function getOwner() external view returns (address payable) {
+        return owner;
+    }
+    
+    
 }

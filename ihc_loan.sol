@@ -138,7 +138,7 @@ library SafeMath {
     }
 }
 
-contract IHC_TEST_LOAN {
+contract IHC_LOAN {
     using SafeMath for uint256;
     struct Terms {
         uint256 collateralAmount;
@@ -154,11 +154,16 @@ contract IHC_TEST_LOAN {
     uint256 repayByTimestamp;
     uint loanDuration;
     uint256 feePercent;
-    uint256 loanAmount;
     uint256 loanAmountWithoutFee;
+    uint256 loanAmount;
     uint256 loanMinAmount;
     uint256 collateralAmountWithoutFee;
     uint256 private transactionFeePercent;
+    bool public borrower_result;
+    bool public lender_result;
+    bool public repay_result;
+    bool public liquidate_result;
+
     constructor (
         Terms memory _terms
     ) public payable{
@@ -178,7 +183,7 @@ contract IHC_TEST_LOAN {
         }else {
             revert();
         }
-        ihcTokenAddress = 0xf7AfD1438CB234A58f8740Be20EB2094019D71d8;
+        ihcTokenAddress = 0x86a53fcd199212FEa44FA7e16EB1f28812be911D;
         lender = IHC(ihcTokenAddress).getLoanPoolAddress();
         state = LoanState.Created;
     }
@@ -208,14 +213,14 @@ contract IHC_TEST_LOAN {
         return IHC(ihcTokenAddress).balanceOf(lender);
     }
     
-    function getLoanAmount() public view returns(uint256) {
-        
-        return loanAmount;
-    }
-    
     function getLoanAmountWithoutFee() public view returns(uint256) {
         
         return loanAmountWithoutFee;
+    }
+    
+    function getLoanAmount() public view returns(uint256) {
+        
+        return loanAmount;
     }
     
     function getCollateralAmount() public view returns(uint256) {
@@ -237,19 +242,19 @@ contract IHC_TEST_LOAN {
     }
     
     function getFeeAmount() public view returns(uint256) {
-        return ((loanAmount * feePercent) / 100 / 365) * loanDuration;
+        return ((loanAmountWithoutFee * feePercent) / 100 / 365) * loanDuration;
     }
     
     function getRepayAmount() public view returns(uint256) {
-        uint feeAmount = ((loanAmount * feePercent) / 100 / 365) * loanDuration;
-        return loanAmountWithoutFee.add(feeAmount);
+        uint feeAmount = ((loanAmountWithoutFee * feePercent) / 100 / 365) * loanDuration;
+        return loanAmount.add(feeAmount);
     }
     
     function checkTokenAllowance(address owner) public view returns (uint256) {
         return IHC(ihcTokenAddress).allowance(owner, address(this));
     }
     
-    function takeALoanAndAcceptLoanTerms() public payable onlyInState(LoanState.Created) {
+    function takeALoanAndAcceptLoanTerms() public payable onlyInState(LoanState.Created) returns(bool) {
         require(terms.collateralAmount >= IHC(ihcTokenAddress).getLoanMinAmount(), "Minimum loan amount not met");
         borrower = msg.sender;
         state = LoanState.Taken;
@@ -257,29 +262,38 @@ contract IHC_TEST_LOAN {
         // calculate
         feePercent = IHC(ihcTokenAddress).getLoanFeePercent();
         transactionFeePercent = IHC(ihcTokenAddress).getTransactionFeePercent();
-        loanAmountWithoutFee = terms.collateralAmount * IHC(ihcTokenAddress).getLoanSizePercent() / 100;
-        loanAmount = calculateTransferAmount(loanAmountWithoutFee);
+        loanAmount = terms.collateralAmount * IHC(ihcTokenAddress).getLoanSizePercent() / 100;
+        loanAmountWithoutFee = calculateTransferAmount(loanAmount);
         collateralAmountWithoutFee = calculateTransferAmount(terms.collateralAmount);
         
         // grant allowance on token smart contract
-        IHC(ihcTokenAddress).transferFrom(borrower, address(this), terms.collateralAmount);
+        borrower_result = IHC(ihcTokenAddress).transferFrom(borrower, address(this), terms.collateralAmount);
         
         // grant allowance on token smart contract
-        IHC(ihcTokenAddress).transferFrom(lender, borrower, loanAmountWithoutFee);
+        lender_result = IHC(ihcTokenAddress).transferFrom(lender, borrower, loanAmount);
+        
+        if(borrower_result == true && lender_result == true) {
+            return true;
+        }else{
+            return false;
+        }
     }
     
-    function repay() public onlyInState(LoanState.Taken) {
+    function repay() public onlyInState(LoanState.Taken) returns(bool) {
         require(msg.sender == borrower, "Only the borrower can repay the loan");
-        uint feeAmount = ((loanAmount * feePercent) / 100 / 365) * loanDuration;
-        IHC(ihcTokenAddress).transferFrom(borrower, lender, loanAmountWithoutFee.add(feeAmount));
+        uint feeAmount = ((loanAmountWithoutFee * feePercent * loanDuration) / 100) / 365;        
+        repay_result = IHC(ihcTokenAddress).transferFrom(borrower, lender, loanAmount.add(feeAmount));
         selfdestruct(borrower);
+
+        return repay_result;
     }
     
-    function liquidate() public onlyInState(LoanState.Taken) {
+    function liquidate() public onlyInState(LoanState.Taken) returns(bool) {
         require(msg.sender == lender, "Only the lender can liquidate the loan");
         require(block.timestamp >= repayByTimestamp, "Can not liquidate before the loan is due");
-        IHC(ihcTokenAddress).transfer(lender, collateralAmountWithoutFee);
+        liquidate_result = IHC(ihcTokenAddress).transfer(lender, collateralAmountWithoutFee);
         selfdestruct(lender);
+        return liquidate_result;
     }
     
     function calculateTransferAmount(uint256 originalAmount) internal returns(uint256) {
